@@ -219,8 +219,8 @@ They use a denoising diffusion objective similar to DDPMs for pretraining on equ
 and then fine-tune on forces and energies as described by <d-cite key="zaidi2022pretraining"></d-cite>.
 This makes the model not only more data efficient, but also results in significantly faster inference times,
 as it doesn't use a computationally expensive equivariant architecture.
-<d-cite key="harcombe2025ontheconnection"></d-cite> reported that their diffusion models needed
-50\% less training data to reach the same accuracy as their non-diffusion models
+Harcombe et al.<d-cite key="harcombe2025ontheconnection"></d-cite> reported that their diffusion models needed
+50% less training data to reach the same accuracy as their non-diffusion models
 that also don't respect symmetries in their experiments. Even though symmetry-agnostic diffusion models are more data efficient and
 are arguably more accurate for relaxation tasks,
 normal NNPs typically yield better force RMSE values.
@@ -248,7 +248,7 @@ The first key idea is to remove all but one degree of freedom in the message pas
 Given two atoms $i$ and $j$ with their positions $r_i$ and $r_j$, plus their embedding irreps
 with corresponding Wigner-D matrix $D_{R_{ij}}$ performs a rotation $R_{ij}$ that aligns the inter-atomic vector $r_{ij} = r_j - r_i$ with the z-axis.
 Generally, with one atom fixed at the center of the coordinate system, the other atom has three degrees of freedom to the first atom left, prompting a full SO(3) equivariant architecture.
-<d-cite key="zitnick2022sphericalchannelsmodelingatomic"></d-cite> rotate the coordinate system such that atom $j$ lies on the positive z-axis, removing two more degrees of freedom.
+Zitnick et al.<d-cite key="zitnick2022sphericalchannelsmodelingatomic"></d-cite> rotate the coordinate system such that atom $j$ lies on the positive z-axis, removing two more degrees of freedom.
 Then, the eSEN performs the message passing
 
 $$
@@ -591,8 +591,7 @@ that provides a custom `pair_style`.
 This would require writing a new `pair_style` class in C++ that
 interfaces with our MLIP models,
 either via C++-Python bridge or by porting the model to C++ as discussed earlier in the programming language gap section.
-%Interestingly, we have access to the `atoms->x` array, which provides the absolute atomic positions of all atoms in the system,
-%as well as the `atoms->f` array, which allows us to write the computed per-atom forces directly into LAMMPS's core data structures.
+
 While this is by far the most flexible option with the highest level of control,
 it requires the most interation with LAMMPS's core codebase,
 is the most time-consuming and might need additional maintenance in the future.
@@ -600,7 +599,6 @@ Popular models like MACE<d-cite key="batatia2022mace"></d-cite> were directly po
 Even though it can be the faster option in terms of MD throughput on the CPU, porting a model requires a lot of work
 from experts in both C++ and the respective MLIP framework; a process which is not always possible,
 not guaranteed to offer the best performance and rarely graphics processing unit (GPU) compatible out-of-the-box.
-%All-in-all, this option seems highly unrealistic as we already have a very close alternative: the `ML-IAP` package.
 All-in-all, this option didn't seem general, realistic or time-efficient enough for our purposes.
 
 #### Option 2: The ML-IAP package
@@ -682,10 +680,8 @@ After some digging through the LAMMPS source code and some trial-and-error,
 two facts became clear:
 Both `atom->x` and `atom->f` contain the positions and forces of *all atoms*, local and ghost.
 Secondly, the arrays start with local atoms, directly followed by all ghost atoms as illustrated in the memory-layout panel above.
-%For force-predictions, we definitely want to use all atoms as inputs, as ghost atoms can exert forces on real atoms.
 We use all atoms, local and ghost as input to our MLIPs, because ghost atoms too can exert forces on real atoms
 as shown in the ghost-atom schematic above.
-%We postulate that ghost atoms are updated with a force-predictor producing *exactly the same* forces as ours --
 We only apply the predicted forces to our local atoms, and postulate that
 if there exists a ghost atom, it is updated by *exactly the same* force predictor.
 This is important to ensure that Newton's third law holds, i.e. that every action has an equal and opposite reaction.
@@ -944,7 +940,6 @@ the simulations use logarithmic pressure settings as shown in the table below.
 
 For simplicity, we convert 1 bar to 100 kPa instead of 101.325 kPa during post-processing.
 Every 10 simulation steps, we dump the entire system state to a lammpstr file, about 8 GB per simulation.
-%We used multiple H100 NVL® GPUs in parallel to run all simulations in a reasonable timeframe, which still amounted to multiple days of compute per model.
 To compress the output data, we convert the lammpstr files to a custom delta-compressed binary format with
 gzip compression, resulting in a trajectory file of about 100MB per simulation.
 To compute the equilibrium adsorption capacity, we only consider the last 50\% of each simulation,
