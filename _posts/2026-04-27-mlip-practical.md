@@ -37,7 +37,8 @@ toc:
   - name: Evaluation
     subsections:
     - name: Inference Speed
-    - name: Simulating MOF Adsorption
+    - name: Simulating CO2 Diffusion
+    - name: Simulating CO2 Adsorption in MOF
   - name: Conclusion
   - name: References
 
@@ -841,7 +842,180 @@ as it intuitively relates to how much simulation time can be covered in a day of
   </div>
 </div>
 
-### Simulating MOF Adsorption
+
+### Simulating CO₂ Diffusion
+
+We want to investigate how well MLIPs can run carbon-dioxide gas simulations in a NVE ensemble depending on temperature. For this we both investigate energy conservation and leverage diffusion coefficients as a measure of how well the MLIP captures the dynamics of CO₂ gas. The total energy of a system should be conserved in a NVE ensemble by definition. In MD simulations, the potential energy $E_{\text{pot}}$ of the system is converted to kinetic energy $E_{\text{kin}}$ and vice versa, keeping the total energy $E_{\text{tot}} = E_{\text{pot}} + E_{\text{kin}}$ constant over time. We evaluate energy conservation by running a system of 50 carbon-dioxide molecules (150 atoms) in a 25 Å × 25 Å × 25 Å periodic box. The system is first thermalized to 300K by sampling atomic velocities from a Maxwell-Boltzmann distribution and running a NVT ensemble for 10ps with a time step of 1 fs. Then, we re-sample the atomic velocities again from the Maxwell-Boltzmann distribution at 400K to introduce a temperature jump, and run a NVE ensemble for 10ps again. We repeat this procedure a total of 10 times and keep track of all relevant parameters during the simulation. Additionally, we calculate and compare the diffusion coefficients obtained from the MD simulations to the experimentally obtained diffusion coefficients of CO₂ gas at different temperatures<d-cite key="burgess2024selfdiffusion"></d-cite>. The diffusion coefficient $D$ is a measure of how fast particles spread out over time, and can be computed from the MSD using
+
+$$
+D = \lim_{\Delta t \to \infty} \frac{1}{6t} \langle |r(t + \Delta t) - r(t_{0})|^2 \rangle_{t_0}
+$$
+
+which we approximate. A high diffusion coefficient means that particles are moving quickly and spreading out rapidly, while a low diffusion coefficient means that particles are moving slowly and spreading out more slowly. Capturing this behavior correctly is a requirement for later simulating gas adsorption in MOFs, so we want to make sure that our models can do this correctly. The relationship between temperature $T$, collision frequency $\Omega(T)$, and diffusion coefficient $D$ in gasses is
+
+$$
+D \propto \frac{T^{3/2}}{p\Omega(T)}
+$$
+
+where $p$ is the pressure of the gas in bar<d-cite key="marrero1972gaseous"></d-cite>.
+
+<div class="row mt-3">
+  <div class="col-sm-6 mt-3 mt-md-0">
+    {% include figure.liquid
+      path="assets/img/2026-04-27-mlip-practical/total_energy_vs_step.png"
+      class="img-fluid rounded z-depth-1"
+    %}
+  </div>
+  <div class="col-sm-6 mt-3 mt-md-0">
+    {% include figure.liquid
+      path="assets/img/2026-04-27-mlip-practical/potential_energy_vs_step.png"
+      class="img-fluid rounded z-depth-1"
+    %}
+  </div>
+</div>
+<div class="caption">
+  Total energy (left) and potential energy (right) over time for different models.
+</div>
+
+In the figure above we show the total and potential energy over time for different models during the CO₂ gas stability test. Orb-v2 and direct Orb-v3 exhibit significant energy drift over time, 241.52 meV/ps and 78.14 meV/ps on average, respectively. The argument can be made that this is a consequence of the explicit architecture, and we agree to some extent. Learning a smooth energy surface is arguably easier than learning a smooth force surface, because it allows the model to focus on the relationship between atoms rather than figuring out how this relationship translates into forces, where it has to learn what a force *is* and how it rotates with the system, etc. But the conservative Orb-v3 model also experiences a slight energy drift of 9.42 meV/ps on average, despite being "conservative" by design.
+
+<div class="table-responsive">
+  <table class="table table-sm table-borderless">
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>Drift (meV/ps)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Orb-v2</td>
+        <td>241.52</td>
+      </tr>
+      <tr>
+        <td>Orb-v3 Direct Inf</td>
+        <td>78.14</td>
+      </tr>
+      <tr>
+        <td>Orb-v3 Conservative Inf</td>
+        <td>9.42</td>
+      </tr>
+      <tr>
+        <td>SevenNet MF-ompa</td>
+        <td>0.30</td>
+      </tr>
+      <tr>
+        <td>Nequix Default</td>
+        <td>0.26</td>
+      </tr>
+      <tr>
+        <td>eSEN-30M-OAM</td>
+        <td>0.26</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="caption">
+    Energy drift in meV/ps for different models during the CO₂ gas stability test averaged over all temperatures.
+  </div>
+</div>
+
+<div class="row mt-3">
+  <div class="col-sm-6 mt-3 mt-md-0">
+    {% include figure.liquid
+      path="assets/img/2026-04-27-mlip-practical/msd_per_model.png"
+      class="img-fluid rounded z-depth-1"
+    %}
+  </div>
+  <div class="col-sm-6 mt-3 mt-md-0">
+    {% include figure.liquid
+      path="assets/img/2026-04-27-mlip-practical/diffusion_vs_temperature.png"
+      class="img-fluid rounded z-depth-1"
+    %}
+  </div>
+</div>
+<div class="caption">
+  MSD of CO₂ molecules over time for different models (left). Diffusion coefficients at different temperatures for different models (right).
+</div>
+
+<div class="row mt-3">
+  <div class="col-sm-6 mt-3 mt-md-0">
+    {% include figure.liquid
+      path="assets/img/2026-04-27-mlip-practical/rdf_co2.png"
+      class="img-fluid rounded z-depth-1"
+    %}
+  </div>
+  <div class="col-sm-6 mt-3 mt-md-0">
+    {% include figure.liquid
+      path="assets/img/2026-04-27-mlip-practical/velocity_distribution.png"
+      class="img-fluid rounded z-depth-1"
+    %}
+  </div>
+</div>
+<div class="caption">
+  Radial distribution function of atoms in the system (left). Velocity distribution of CO₂ molecules (right).
+</div>
+
+In the MSD figure above we show the MSD of CO₂ molecules over time for different models (left) and use that to compute the diffusion coefficients at different temperatures (right).
+
+They show Orb-v2 and direct Orb-v3 exhibiting a diffusion coefficient twice and thrice as large as all other models. However, Burgess<d-cite key="burgess2024selfdiffusion"></d-cite> provides experimental diffusion coefficients for CO₂ gas at 298K at a similar density to our test setup, which aligns best with Orb-v2's prediction. The reason for this discrepancy is unclear, and could be coincidental. Orb-v2 suffers from significant energy drift naturally leading to an overestimation of the diffusion coefficient, as the system heats up over time, increasing the average kinetic energy of the atoms. It could be that the small system size and short simulation time could lead to an underestimation<d-cite key="iwashita2022usefulness"></d-cite> and Orb-v2's energy drift just happens to counteract this effect.
+
+We fit parameters $A$ and $B$ to
+
+$$
+\ln(D) = A + \frac{B}{T}
+$$
+
+a simple Arrhenius-type equation<d-cite key="arrhenius1889dissociationswarme"></d-cite> closely following work done by Burgess<d-cite key="burgess2024selfdiffusion"></d-cite> to obtain the diffusion coefficients table below.
+
+<div class="table-responsive">
+  <table class="table table-sm table-borderless">
+    <thead>
+      <tr>
+        <th>Model</th>
+        <th>$D_{\text{ref}}$ / cm²s⁻¹</th>
+        <th>$A$</th>
+        <th>$B$</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Experimental<d-cite key="burgess2024selfdiffusion"></d-cite></td>
+        <td>0.120</td>
+        <td>0.015</td>
+        <td>-637.089</td>
+      </tr>
+      <tr>
+        <td>Orb-v2</td>
+        <td>0.178</td>
+        <td>0.0533</td>
+        <td>-568.4568</td>
+      </tr>
+      <tr>
+        <td>Orb-v3 Direct</td>
+        <td>0.191</td>
+        <td>-0.7975</td>
+        <td>-451.4263</td>
+      </tr>
+      <tr>
+        <td>Orb-v3 Conservative</td>
+        <td>0.004</td>
+        <td>-1.2809</td>
+        <td>-612.5149</td>
+      </tr>
+      <tr>
+        <td>eSEN-30M-OAM</td>
+        <td>0.004</td>
+        <td>-1.2570</td>
+        <td>-618.9303</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="caption">
+    Diffusion coefficients of CO₂ gas at 298K and 1 bar pressure.
+  </div>
+</div>
+
+### Simulating CO2 Adsorption in MOF
 
 Metal-Organic Frameworks (MOFs) have become highly popular among materials scientists,
 primarily due to their exceptional porosity and tunable properties<d-cite key="furukawa2013chemistry"></d-cite>.
