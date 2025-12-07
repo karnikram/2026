@@ -1,7 +1,7 @@
 ---
 layout: distill
-title: Evaluating Machine-Learned Inter-Atomic Potentials for Practical Simulation Workflows
-description: MLIPs are a promising new paradigm in atomistic simulation, potentially offering the accuracy of ab-initio methods at the speed of empirical potentials. In this blog post, we give an overview of recent MLIP architectures, followed by an evaluation on a practical CO2 adsorption simulation. We find that as of today these models, though promising, are far from plug-and-play, requiring significant engineering effort to operate within established simulation frameworks, while failing to produce physically consistent results.
+title: Evaluating Machine-Learned Inter-Atomic Potentials for a Practical Simulation Workflow
+description: MLIPs are a promising new paradigm in atomistic simulation, potentially offering the accuracy of ab-initio methods at the speed of empirical potentials. In this blog post, we give an overview of recent MLIP architectures, followed by an evaluation on a practical CO2 adsorption simulation. We find that as of today these models, though promising, are far from plug-and-play, requiring significant engineering effort to operate within established simulation frameworks, while also failing to produce physically consistent results.
 date: 2026-04-27
 future: true
 htmlwidgets: true
