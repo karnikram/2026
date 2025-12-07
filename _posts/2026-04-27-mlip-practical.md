@@ -213,14 +213,14 @@ The Clebsch-Gordan tensor product of two SO(3) representations is again a repres
 
 ### Orb-v2 (2024)
 
-The Orb models from <d-cite key="neumann2024orbv2"></d-cite> were the first to demonstrate
+The Orb models from Neumann et al.<d-cite key="neumann2024orbv2"></d-cite> were the first to demonstrate
 competitive accuracy without an equivariant or invariant architecture.
 They use a denoising diffusion objective similar to DDPMs for pretraining on equilibrium structures,
-and then fine-tune on forces and energies as described by <d-cite key="zaidi2022pretraining"></d-cite>.
+and then fine-tune on forces and energies as described by Zaidi et al.<d-cite key="zaidi2022pretraining"></d-cite>.
 This makes the model not only more data efficient, but also results in significantly faster inference times,
 as it doesn't use a computationally expensive equivariant architecture.
-<d-cite key="harcombe2025ontheconnection"></d-cite> reported that their diffusion models needed
-50\% less training data to reach the same accuracy as their non-diffusion models
+Harcombe et al.<d-cite key="harcombe2025ontheconnection"></d-cite> reported that their diffusion models needed
+50% less training data to reach the same accuracy as their non-diffusion models
 that also don't respect symmetries in their experiments. Even though symmetry-agnostic diffusion models are more data efficient and
 are arguably more accurate for relaxation tasks,
 normal NNPs typically yield better force RMSE values.
@@ -233,7 +233,7 @@ They provide models pretrained on the MPtrj dataset<d-cite key="deng2023mptrj"><
 
 ### eSEN (2025)
 
-The eSEN model from <d-cite key="fu2025esen"></d-cite> builds upon several earlier works from the authors,
+The eSEN model from Fu et al. (FAIR)<d-cite key="fu2025esen"></d-cite> builds upon several earlier works from the authors,
 including eSCN<d-cite key="passaro2023reducingso3convolutionsso2"></d-cite> and SCN<d-cite key="zitnick2022sphericalchannelsmodelingatomic"></d-cite>.
 It is a conservative MLIP that employs a novel SO(2) equivariant architecture,
 which avoids e3nn tensor products<d-cite key="geiger2022e3nn"></d-cite>, while still being equivariant to rotations.
@@ -245,10 +245,8 @@ which avoids e3nn tensor products<d-cite key="geiger2022e3nn"></d-cite>, while s
 %}
 
 The first key idea is to remove all but one degree of freedom in the message passing step.
-Given two atoms $i$ and $j$ with their positions $r_i$ and $r_j$, plus their embedding irreps
-with corresponding Wigner-D matrix $D_{R_{ij}}$ performs a rotation $R_{ij}$ that aligns the inter-atomic vector $r_{ij} = r_j - r_i$ with the z-axis.
 Generally, with one atom fixed at the center of the coordinate system, the other atom has three degrees of freedom to the first atom left, prompting a full SO(3) equivariant architecture.
-<d-cite key="zitnick2022sphericalchannelsmodelingatomic"></d-cite> rotate the coordinate system such that atom $j$ lies on the positive z-axis, removing two more degrees of freedom.
+Zitnick et al.<d-cite key="zitnick2022sphericalchannelsmodelingatomic"></d-cite> however rotate the coordinate system such that atom $j$ lies on the positive z-axis, removing two more degrees of freedom.
 Then, the eSEN performs the message passing
 
 $$
@@ -257,7 +255,7 @@ $$
 
 rotating the result back to the original reference frame.
 The message network still sees the spherical channels displayed relative to its frame of reference and
-can therefore still make out relative information of its neighbors but only has to learn this with one varying degree of freedom,
+can therefore still make out relative information of its neighbors -- but only has to learn this with one varying degree of freedom,
 the azimuthal angle $\theta$ around the z-axis, which $f_{\text{message}}$ needs to smoothly convolve over.
 Spherical harmonics become now become independent of the azimuthal angle $\theta$ and are therefore reduced to circular harmonics,
 which only depend on the polar angle $\phi$ as shown below.
@@ -313,7 +311,7 @@ but primarily because every message passing step requires a custom Wigner-D matr
 
 ### Orb-v3 (2025)
 
-The Orb-v3 models from <d-cite key="rhodes2025orbv3"></d-cite> improve on the previous Orb-v2 models.
+The Orb-v3 models from Rhodes et al.<d-cite key="rhodes2025orbv3"></d-cite> improve on the previous Orb-v2 models.
 Keeping the same symmetry-agnostic diffusion pretraining approach,
 they heavily improve upon the previous version in both speed and accuracy.
 
@@ -366,7 +364,7 @@ that predicts the expected error of the model, allowing the user to filter out p
 
 ### UMA (2025)
 
-The UMA models from <d-cite key="wood2025uma"></d-cite> are the latest addition to the family of MLIPs.
+The UMA models from Wood et al.<d-cite key="wood2025uma"></d-cite> are the latest addition to the family of MLIPs.
 They improve the eSEN family, by training on a vastly larger and more diverse dataset and by
 using a clever architecture change to achieve speedups making it almost competitive with the conservative Orb-v3 models.
 
@@ -591,8 +589,7 @@ that provides a custom `pair_style`.
 This would require writing a new `pair_style` class in C++ that
 interfaces with our MLIP models,
 either via C++-Python bridge or by porting the model to C++ as discussed earlier in the programming language gap section.
-%Interestingly, we have access to the `atoms->x` array, which provides the absolute atomic positions of all atoms in the system,
-%as well as the `atoms->f` array, which allows us to write the computed per-atom forces directly into LAMMPS's core data structures.
+
 While this is by far the most flexible option with the highest level of control,
 it requires the most interation with LAMMPS's core codebase,
 is the most time-consuming and might need additional maintenance in the future.
@@ -600,7 +597,6 @@ Popular models like MACE<d-cite key="batatia2022mace"></d-cite> were directly po
 Even though it can be the faster option in terms of MD throughput on the CPU, porting a model requires a lot of work
 from experts in both C++ and the respective MLIP framework; a process which is not always possible,
 not guaranteed to offer the best performance and rarely graphics processing unit (GPU) compatible out-of-the-box.
-%All-in-all, this option seems highly unrealistic as we already have a very close alternative: the `ML-IAP` package.
 All-in-all, this option didn't seem general, realistic or time-efficient enough for our purposes.
 
 #### Option 2: The ML-IAP package
@@ -682,10 +678,8 @@ After some digging through the LAMMPS source code and some trial-and-error,
 two facts became clear:
 Both `atom->x` and `atom->f` contain the positions and forces of *all atoms*, local and ghost.
 Secondly, the arrays start with local atoms, directly followed by all ghost atoms as illustrated in the memory-layout panel above.
-%For force-predictions, we definitely want to use all atoms as inputs, as ghost atoms can exert forces on real atoms.
 We use all atoms, local and ghost as input to our MLIPs, because ghost atoms too can exert forces on real atoms
 as shown in the ghost-atom schematic above.
-%We postulate that ghost atoms are updated with a force-predictor producing *exactly the same* forces as ours --
 We only apply the predicted forces to our local atoms, and postulate that
 if there exists a ghost atom, it is updated by *exactly the same* force predictor.
 This is important to ensure that Newton's third law holds, i.e. that every action has an equal and opposite reaction.
@@ -751,7 +745,7 @@ Even though a single MD run can't be batched due to its sequential nature,
 independent parallel-running MD simulations of smaller systems can be batched together and benefit.
 But not only the GPU has a large effect on the linear factor:
 Orb-v3 Direct predicts forces of 100.000 atoms
-as fast as UMA can predict the forces of only about 2.000 atoms. So even though in theory all models scale linearly with system size, O(N); the actual inference speed is model dependent.Explicit models without an equivariant architecture like Orb-v2 and direct Orb-v3 run the fastest.
+as fast as UMA can predict the forces of only about 2.000 atoms. So even though in theory all models scale linearly with system size, O(N); the actual inference speed is model dependent. Explicit models without an equivariant architecture like Orb-v2 and direct Orb-v3 run the fastest.
 Even with more parameters than Orb-v2 and a higher neighbor limit, Orb-v3 ends up being slightly faster due to reduced overhead of
 edge aggregation and message passing of 10 layers fewer<d-cite key="rhodes2025orbv3"></d-cite>.
 On third place is Nequix, that is both implicit and uses the tensor products of e3nn<d-cite key="geiger2022e3nn"></d-cite> for equivariance,
@@ -884,7 +878,7 @@ The $1/r$ dependence of electrostatic interactions makes them exceptionally long
 In our MOF example, the interaction energy between the $Mg^{2+}$ metal node ($q\approx1.45e$<d-cite key="fu2023solvent"></d-cite>)
 in Mg-MOF-74 and the carbon atom of a CO$_2$ molecule ($q\approx0.7e$<d-cite key="fu2023solvent"></d-cite>) at a distance of 15 Å remains 0.9710 eV (141 kJ/mol).
 The corresponding Coulomb force, which decays with a factor of $1/r^2$, is still 1.07 eV/Å (103 kJ/mol), a non-negligible value.
-Nevertheless, MLIPs often restrict their ``receptive field'' to only a few Ångströms primarily for performance
+Nevertheless, MLIPs often restrict their ''receptive field'' to only a few Ångströms primarily for performance
 -- typically 6–10 Å<d-cite key="rhodes2025orbv3, neumann2024orbv2"></d-cite>.
 Capturing such long-range interactions would solely rely on message-passing propagation,
 a process that would require the atoms to be connected through a chain of neighbors.
@@ -944,7 +938,6 @@ the simulations use logarithmic pressure settings as shown in the table below.
 
 For simplicity, we convert 1 bar to 100 kPa instead of 101.325 kPa during post-processing.
 Every 10 simulation steps, we dump the entire system state to a lammpstr file, about 8 GB per simulation.
-%We used multiple H100 NVL® GPUs in parallel to run all simulations in a reasonable timeframe, which still amounted to multiple days of compute per model.
 To compress the output data, we convert the lammpstr files to a custom delta-compressed binary format with
 gzip compression, resulting in a trajectory file of about 100MB per simulation.
 To compute the equilibrium adsorption capacity, we only consider the last 50\% of each simulation,
