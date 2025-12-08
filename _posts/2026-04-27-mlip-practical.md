@@ -37,8 +37,8 @@ toc:
   - name: Evaluation
     subsections:
     - name: Inference Speed
-    - name: Simulating CO2 Diffusion
-    - name: Simulating CO2 Adsorption in MOF
+    - name: Simulating CO₂ Diffusion
+    - name: Simulating CO₂ Adsorption in MOF
   - name: Conclusion
   - name: References
 
@@ -1015,7 +1015,7 @@ a simple Arrhenius-type equation<d-cite key="arrhenius1889dissociationswarme"></
   </div>
 </div>
 
-### Simulating CO2 Adsorption in MOF
+### Simulating CO₂ Adsorption in MOF
 
 Metal-Organic Frameworks (MOFs) have become highly popular among materials scientists,
 primarily due to their exceptional porosity and tunable properties<d-cite key="furukawa2013chemistry"></d-cite>.
