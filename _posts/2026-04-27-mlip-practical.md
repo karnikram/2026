@@ -1226,6 +1226,7 @@ A potential area of future work could be the evaluation
 -- with the necessary computational resources at hand --
 of more models or orb-v3 variations to find better performing models for this task.
 
+*We also plan to release code for all the experiments in this post upon publication.*
 
 ## Conclusion
 
